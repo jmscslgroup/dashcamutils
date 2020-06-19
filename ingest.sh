@@ -1,6 +1,54 @@
 
 # # TODO convert to snakemake
 
+function usage {
+    echo "./ingest.sh [-nk] -f MOVIE.MP4 [-d irods_directory] [-c _concatenated]"
+    echo " Processes the _ingest folder to produce uploadable webcam videos"
+    echo " -n: run in test mode only to see what movies should be concatenated"
+    # echo " -v: turn on verbose mode"
+    echo " -k: keep a local copy of final versions, do not send to IRODS folder"
+    echo " -f directory/YYYY-MMD-...-dashcame-filename.MP4: input filename"
+    echo " -d _output: destination of output (finalized) files"
+    echo " -c _concatenated: directory in which to store concatenated videos"
+}
+
+verbose=0
+test=0
+FILENAME=
+IRODSDIR=
+CONCATLEFTOVERS=_concatenated
+COPYTOIRODS=1
+while getopts "h?nkd:" opt; do
+    case "$opt" in
+    h|\?)
+        usage
+        exit 0
+        ;;
+    v)  verbose=1
+        ;;
+    n)  test=1
+        ;;
+    k)  COPYTOIRODS=0
+            ;;
+    f)  FILENAME=${OPTARG}
+        ;;
+    d)  IRODSDIR=${OPTARG}
+        ;;
+    c)  CONCATLEFTOVERS=${OPTARG}
+        ;;
+    esac
+done
+
+IRODSDIR_DEFAULT=/Users/sprinkle/work/data/cyverse/rahulbhadani/JmscslgroupData/PandaData/
+if [[ "x${IRODSDIR}" = "x" ]]; then
+    read -p "Would you like to copy webcams to ${IRODS_DEFAULT}?" yn
+    case $yn in 
+        [Yy]* ) IRODSDIR=${IRODSDIR_DEFAULT}; break;;
+        [Nn]* ) IRODSDIR=; break;;
+        * ) echo "Please answer y/n or Y/N";;
+    esac
+fi
+
 mkdir -p _ingest _processing _output _concatenated
 
 for f in `ls _ingest/*.MP4`; do
@@ -43,50 +91,58 @@ while [[ ${PROCESSINGFILES[0]} ]]; do
     echo ${PROCESSINGFILES}[0]
 done
 
-echo "All files processed; moving concatenated files to cyverse local folders now."
-
-IRODSDIR=/Users/sprinkle/work/data/cyverse/rahulbhadani/JmscslgroupData/PandaData/
+# IRODSDIR=/Users/sprinkle/work/data/cyverse/rahulbhadani/JmscslgroupData/PandaData/
 echo "IRODSDIR=${IRODSDIR}"
 
-for f in `ls _output/*.MP4`; do
-    FILEDATE_S=$(date -j -f "%Y_%m%d_%H%M%S" $(echo $(basename $f) | cut -c 1-16) +%s)
-    # echo "FILEDATE_S=${FILEDATE_S}"
-    FILEDATE=$(date -r "${FILEDATE_S}" )
-    PANDADATADIR=$(date -j -f "%Y_%m%d_%H%M%S" $(echo $(basename $f) | cut -c 1-16) +"%Y_%m_%d")
-    
-    echo "File $f (date estimate=${FILEDATE}) should go in folder "
-    echo "   ${IRODSDIR}${PANDADATADIR}"
-    
-    # what CAN files exist in those folders?
-    for canfile in `ls ${IRODSDIR}${PANDADATADIR}/*CAN*.csv`; do
-        
-        # 2020-05-13-19-05-07
-        CANFILEDATE_S=$(date -j -f "%Y-%m-%d-%H-%M-%S" $(echo $(basename $canfile) | cut -d"_" -f1) +%s)
-        CANFILEDATE=$(date -r ${CANFILEDATE_S} )
-        # echo " CANFILEDATE_S=${CANFILEDATE_S}"
-        # echo " Possible match includes ${canfile} (date=${CANFILEDATE})"
-        DIFF1=$(( ${FILEDATE_S} - ${CANFILEDATE_S} ))
-        DIFF=${DIFF1#-}
-        # echo " DIFF=${DIFF}"
-        
-        NEWVIDEOFILENAME=
-        if [[ ${DIFF} -lt 90 ]]; then
-            echo " Possible match includes ${canfile} (date=${CANFILEDATE})"
-            echo " DIFF=${DIFF}"
-            NEWVIDEOFILENAME="$(echo $(basename "${canfile}") | rev | cut -d'_' -f3- | rev)"_dashcam.mp4
-            echo "NEWVIDEOFILENAME=${NEWVIDEOFILENAME}"
-        elif [[ ${DIFF} -lt 180 ]]; then
-            echo " Possible wider match includes ${canfile} (date=${CANFILEDATE})"
-            echo " DIFF=${DIFF}"
-            NEWVIDEOFILENAME="$(echo $(basename "${canfile}") | rev | cut -d'_' -f3- | rev)"_dashcam.mp4
-            echo "NEWVIDEOFILENAME=${NEWVIDEOFILENAME}"
-        fi
-        
-        if [[ ! "x${NEWVIDEOFILENAME}" == "x" ]]; then
-            echo "Moving file to matching directory, with matching name:"
-            mv $f ${IRODSDIR}${PANDADATADIR}/${NEWVIDEOFILENAME}
-        fi
-        
-    done
+if [[ $COPYTOIRODS = 1 ]]; then
+    if [[ ! "x${IRODSDIR}" = "x" ]]; then
 
-done
+        echo "All files processed; moving concatenated files to cyverse local folders now."
+        for f in `ls _output/*.MP4`; do
+            FILEDATE_S=$(date -j -f "%Y_%m%d_%H%M%S" $(echo $(basename $f) | cut -c 1-16) +%s)
+            # echo "FILEDATE_S=${FILEDATE_S}"
+            FILEDATE=$(date -r "${FILEDATE_S}" )
+            PANDADATADIR=$(date -j -f "%Y_%m%d_%H%M%S" $(echo $(basename $f) | cut -c 1-16) +"%Y_%m_%d")
+    
+            echo "File $f (date estimate=${FILEDATE}) should go in folder "
+            echo "   ${IRODSDIR}${PANDADATADIR}"
+    
+            # what CAN files exist in those folders?
+            for canfile in `ls ${IRODSDIR}${PANDADATADIR}/*CAN*.csv`; do
+        
+                # 2020-05-13-19-05-07
+                CANFILEDATE_S=$(date -j -f "%Y-%m-%d-%H-%M-%S" $(echo $(basename $canfile) | cut -d"_" -f1) +%s)
+                CANFILEDATE=$(date -r ${CANFILEDATE_S} )
+                # echo " CANFILEDATE_S=${CANFILEDATE_S}"
+                # echo " Possible match includes ${canfile} (date=${CANFILEDATE})"
+                DIFF1=$(( ${FILEDATE_S} - ${CANFILEDATE_S} ))
+                DIFF=${DIFF1#-}
+                # echo " DIFF=${DIFF}"
+        
+                NEWVIDEOFILENAME=
+                if [[ ${DIFF} -lt 90 ]]; then
+                    echo " Possible match includes ${canfile} (date=${CANFILEDATE})"
+                    echo " DIFF=${DIFF}"
+                    NEWVIDEOFILENAME="$(echo $(basename "${canfile}") | rev | cut -d'_' -f3- | rev)"_dashcam.mp4
+                    echo "NEWVIDEOFILENAME=${NEWVIDEOFILENAME}"
+                elif [[ ${DIFF} -lt 180 ]]; then
+                    echo " Possible wider match includes ${canfile} (date=${CANFILEDATE})"
+                    echo " DIFF=${DIFF}"
+                    NEWVIDEOFILENAME="$(echo $(basename "${canfile}") | rev | cut -d'_' -f3- | rev)"_dashcam.mp4
+                    echo "NEWVIDEOFILENAME=${NEWVIDEOFILENAME}"
+                fi
+        
+                if [[ ! "x${NEWVIDEOFILENAME}" == "x" ]]; then
+                    echo "Moving file to matching directory, with matching name:"
+                    mv $f ${IRODSDIR}${PANDADATADIR}/${NEWVIDEOFILENAME}
+                fi
+        
+            done
+
+        done
+    else
+        echo "No IRODSDIR available, quitting."
+    fi
+else
+    echo "Not copying videos to IRODS folder, quitting."
+fi
