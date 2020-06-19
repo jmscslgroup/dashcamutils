@@ -196,6 +196,8 @@ if [[ ! "x${FILENAME}" == "x" ]]; then
                 fi
             else
                 echo "No need to process, found file ${CONCATLEFTOVERS}/${TRIMFILE}"
+                echo " moving nextfile=${NEXTFILE} to ${CONCATLEFTOVERS}"
+                mv ${NEXTFILE} ${CONCATLEFTOVERS}
             fi
 
                     # echo " mv ${NEXTFILE} ${CONCATLEFTOVERS}"
