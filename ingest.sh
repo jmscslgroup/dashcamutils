@@ -41,7 +41,7 @@ done
 
 IRODSDIR_DEFAULT=/Users/sprinkle/work/data/cyverse/rahulbhadani/JmscslgroupData/PandaData/
 if [[ "x${IRODSDIR}" = "x" ]]; then
-    read -p "Would you like to copy webcams to ${IRODS_DEFAULT}?" yn
+    read -p "Would you like to copy webcams to ${IRODSDIR_DEFAULT}?" yn
     case $yn in 
         [Yy]* ) IRODSDIR=${IRODSDIR_DEFAULT}; break;;
         [Nn]* ) IRODSDIR=; break;;
@@ -134,7 +134,17 @@ if [[ $COPYTOIRODS = 1 ]]; then
         
                 if [[ ! "x${NEWVIDEOFILENAME}" == "x" ]]; then
                     echo "Moving file to matching directory, with matching name:"
-                    mv $f ${IRODSDIR}${PANDADATADIR}/${NEWVIDEOFILENAME}
+                    if [ $test == "0" ]; then
+                        mv $f ${IRODSDIR}${PANDADATADIR}/${NEWVIDEOFILENAME}
+                        FOLDER_TMP=$(dirname $f)
+                        if [[ "x$FOLDER_TMP" == "x" ]]; then
+                            FOLDER_TMP="."
+                        fi
+                        BASE_TMP=$(basename $f)
+                        LOGNAME=${FOLDER_TMP}/mv_${BASE_TMP}.txt
+                        touch ${LOGNAME}
+                        echo "Moved $f to ${IRODSDIR}${PANDADATADIR}/${NEWVIDEOFILENAME}" >> ${LOGNAME}
+                    fi
                 fi
         
             done

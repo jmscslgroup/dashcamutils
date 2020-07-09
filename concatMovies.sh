@@ -98,11 +98,11 @@ if [[ ! "x${FILENAME}" == "x" ]]; then
     EXTENSION=.MP4
     if [[ $(basename ${BASEFILENAME} A.MP4)A.MP4 == ${BASEFILENAME} ]]; then
         EXTENSION=A.MP4
-    elif [[ $(basename ${BASEFILENAME} A_trimmed.MP4)A_trimmed.MP4 == ${BASEFILENAME} ]]; then
+    elif [[ $(basename ${BASEFILENAME} A_tr.MP4)A_tr.MP4 == ${BASEFILENAME} ]]; then
         EXTENSION=A.MP4
     elif [[ $(basename ${BASEFILENAME} B.MP4)B.MP4 == ${BASEFILENAME} ]]; then
         EXTENSION=B.MP4
-    elif [[ $(basename ${BASEFILENAME} B_trimmed.MP4)B_trimmed.MP4 == ${BASEFILENAME} ]]; then
+    elif [[ $(basename ${BASEFILENAME} B_tr.MP4)B_tr.MP4 == ${BASEFILENAME} ]]; then
         EXTENSION=B.MP4
     fi
     
@@ -181,8 +181,8 @@ if [[ ! "x${FILENAME}" == "x" ]]; then
         if [ ! "x${BASENAME}" = "x" ]; then
             echo "need to concatenate: "
             echo "   ${FILENAME} (dur=${DURATION}) should add "
-            echo "   ${NEXTFILE}_trimmed to its end"
-            TRIMFILE=${BASENAME}_trimmed.MP4
+            echo "   ${NEXTFILE}_tr to its end"
+            TRIMFILE=${BASENAME}_tr.MP4
             SEQ2=$(echo $(basename $(echo $(basename ${TRIMFILE} [.MP4][.mp4]) | cut -d'_' -f4-) .MP4))
             CONCATOUTFILE=$(basename ${FILENAME} .MP4)_${SEQ2}.MP4
             if [ ! -f ${CONCATLEFTOVERS}/${TRIMFILE} ]; then
