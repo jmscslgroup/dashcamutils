@@ -7,7 +7,7 @@ function usage {
     echo " -n: run in test mode only to see what movies should be concatenated"
     # echo " -v: turn on verbose mode"
     echo " -k: keep a local copy of final versions, do not send to IRODS folder"
-    echo " -f directory/YYYY-MMD-...-dashcame-filename.MP4: input filename"
+    echo " -i _ingest: name of ingest folder"
     echo " -d _output: destination of output (finalized) files"
     echo " -c _concatenated: directory in which to store concatenated videos"
 }
@@ -16,9 +16,10 @@ verbose=0
 test=0
 FILENAME=
 IRODSDIR=
+INGEST=_ingest
 CONCATLEFTOVERS=_concatenated
 COPYTOIRODS=1
-while getopts "h?nkd:" opt; do
+while getopts "h?nkf:d:c:i:" opt; do
     case "$opt" in
     h|\?)
         usage
@@ -29,8 +30,8 @@ while getopts "h?nkd:" opt; do
     n)  test=1
         ;;
     k)  COPYTOIRODS=0
-            ;;
-    f)  FILENAME=${OPTARG}
+        ;;
+    i)  INGEST=${OPTARG}
         ;;
     d)  IRODSDIR=${OPTARG}
         ;;
@@ -43,15 +44,22 @@ IRODSDIR_DEFAULT=/Users/sprinkle/work/data/cyverse/rahulbhadani/JmscslgroupData/
 if [[ "x${IRODSDIR}" = "x" ]]; then
     read -p "Would you like to copy webcams to ${IRODSDIR_DEFAULT}?" yn
     case $yn in 
-        [Yy]* ) IRODSDIR=${IRODSDIR_DEFAULT}; break;;
-        [Nn]* ) IRODSDIR=; break;;
+        [Yy]* ) IRODSDIR=${IRODSDIR_DEFAULT}; 
+        ;;
+        [Nn]* ) IRODSDIR=""; 
+        ;;
         * ) echo "Please answer y/n or Y/N";;
     esac
 fi
 
-mkdir -p _ingest _processing _output _concatenated
+mkdir -p _processing _output _concatenated
 
-for f in `ls _ingest/*.MP4`; do
+if [ ! -d ${INGEST} ]; then
+    echo "Error! Ingest directory (${INGEST}) does not exist. Aborting."
+    exit -1
+fi
+
+for f in `ls ${INGEST}/*.MP4`; do
     if [[ ! -f _processing/$(basename $f) &&
           ! -f _output/$(basename $f) &&
           ! -f _concatenated/$(basename $f) ]]; then
