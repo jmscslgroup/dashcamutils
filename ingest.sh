@@ -2,7 +2,7 @@
 # # TODO convert to snakemake
 
 function usage {
-    echo "./ingest.sh [-nk] -f MOVIE.MP4 [-d irods_directory] [-c _concatenated]"
+    echo "./ingest.sh [-nk] -i rawmoviesfolder [-d irods_directory] [-c _concatenated]"
     echo " Processes the _ingest folder to produce uploadable webcam videos"
     echo " -n: run in test mode only to see what movies should be concatenated"
     # echo " -v: turn on verbose mode"
@@ -114,6 +114,19 @@ if [[ $COPYTOIRODS = 1 ]]; then
     
             echo "File $f (date estimate=${FILEDATE}) should go in folder "
             echo "   ${IRODSDIR}${PANDADATADIR}"
+            
+            # find out the extension
+            BASEFILENAME=$(basename ${f})
+            EXTENSION=
+            if [[ $(basename ${BASEFILENAME} A.MP4)A.MP4 == ${BASEFILENAME} ]]; then
+                EXTENSION=A
+            elif [[ $(basename ${BASEFILENAME} A_tr.MP4)A_tr.MP4 == ${BASEFILENAME} ]]; then
+                EXTENSION=A
+            elif [[ $(basename ${BASEFILENAME} B.MP4)B.MP4 == ${BASEFILENAME} ]]; then
+                EXTENSION=B
+            elif [[ $(basename ${BASEFILENAME} B_tr.MP4)B_tr.MP4 == ${BASEFILENAME} ]]; then
+                EXTENSION=B
+            fi            
     
             # what CAN files exist in those folders?
             for canfile in `ls ${IRODSDIR}${PANDADATADIR}/*CAN*.csv`; do
@@ -131,12 +144,12 @@ if [[ $COPYTOIRODS = 1 ]]; then
                 if [[ ${DIFF} -lt 90 ]]; then
                     echo " Possible match includes ${canfile} (date=${CANFILEDATE})"
                     echo " DIFF=${DIFF}"
-                    NEWVIDEOFILENAME="$(echo $(basename "${canfile}") | rev | cut -d'_' -f3- | rev)"_dashcam.mp4
+                    NEWVIDEOFILENAME="$(echo $(basename "${canfile}") | rev | cut -d'_' -f3- | rev)"_dashcam${EXTENSION}.mp4
                     echo "NEWVIDEOFILENAME=${NEWVIDEOFILENAME}"
                 elif [[ ${DIFF} -lt 180 ]]; then
                     echo " Possible wider match includes ${canfile} (date=${CANFILEDATE})"
                     echo " DIFF=${DIFF}"
-                    NEWVIDEOFILENAME="$(echo $(basename "${canfile}") | rev | cut -d'_' -f3- | rev)"_dashcam.mp4
+                    NEWVIDEOFILENAME="$(echo $(basename "${canfile}") | rev | cut -d'_' -f3- | rev)"_dashcam${EXTENSION}.mp4
                     echo "NEWVIDEOFILENAME=${NEWVIDEOFILENAME}"
                 fi
         
